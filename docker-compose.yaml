@@ -1,0 +1,46 @@
+services:
+  flask_db:
+    image: postgres:14.3
+    container_name: flask_db
+    volumes:
+      - ./.volumes/postgres/data:/var/lib/postgresql/data
+    networks:
+      - flask-network
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+      POSTGRES_DB: postgres
+    ports:
+      - 5432:5432
+  adminer:
+    image: adminer
+    container_name: adminer
+    restart: always
+    networks:
+      - flask-network
+    depends_on:
+      - flask_db
+    environment:
+      ADMINER_DEFAULT_SERVER: flask_db
+    ports:
+      - 9000:8080
+  api:
+    container_name: flask
+    build:
+      context: .
+      dockerfile: ./Dockerfile.dev
+    restart: always
+    volumes:
+      - ./:/app/
+    networks:
+      - flask-network
+    command: flask --app api run -h 0.0.0.0 -p 5000 --reload  # Cambiado a puerto 5000
+    ports:
+      - 5000:5000  # Cambiado a puerto 5000
+    depends_on:
+      - flask_db
+
+networks:
+  flask-network:
+    driver: bridge
+    name: flask-network
